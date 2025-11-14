@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COBIT 5 Assessment Tool</title>
+    <!-- 1. Muat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Muat Chart.js untuk grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 3. Konfigurasi Tailwind (opsional, untuk font) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <!-- 4. Styling dasar dan untuk menyembunyikan halaman -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Sembunyikan halaman yang tidak aktif */
+        .page {
+            display: none;
+        }
+        /* Tampilkan halaman yang aktif */
+        .page.active {
+            display: block;
+        }
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, .1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <!-- Kontainer Aplikasi Utama -->
+    <div class="flex h-screen font-sans">
+        
+        <!-- === SIDEBAR === -->
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col p-4">
+            <div class="flex items-center px-2 mb-6">
+                <span class="text-2xl font-bold text-blue-600">COBIT 5</span>
+                <span class="ml-2 font-light text-slate-600">Tool</span>
+            </div>
+            
+            <button id="btn-new-assessment" class="flex items-center justify-center w-full px-4 py-3 mb-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow">
+                <!-- Ikon Plus (SVG) -->
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Mulai Assessment Baru
+            </button>
+
+            <nav id="main-nav" class="flex-1 space-y-2">
+                <button data-page="dashboard" class="nav-item flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg bg-blue-600 text-white">
+                    <!-- Ikon LayoutDashboard (SVG) -->
+                    <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <span>Dashboard</span>
+                </button>
+                <button data-page="reports" class="nav-item flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-200">
+                    <!-- Ikon History (SVG) -->
+                    <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                    <span>Riwayat Laporan</span>
+                </button>
+                <button data-page="info" class="nav-item flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-200">
+                    <!-- Ikon BookOpen (SVG) -->
+                    <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span>Info COBIT 5</span>
+                </button>
+            </nav>
+            <div class="mt-auto">
+                <button data-page="logout" class="nav-item flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-200">
+                    <!-- Ikon Logout (SVG) -->
+                    <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    <span>Keluar</span>
+                </button>
+            </div>
+
+        </aside>
+        <!-- === END SIDEBAR === -->
+
+        <!-- === MAIN CONTENT === -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- Header -->
+            <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
+                <h1 class="text-2xl font-semibold text-slate-800">IT Governance Assessment Tool</h1>
+                <!-- User ID & Avatar dihilangkan karena tidak pakai login -->
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-slate-500">Mode Lokal</span>
+                </div>
+            </header>
+            
+            <!-- Kontainer Halaman -->
+            <div class="p-6">
+                
+                <!-- === HALAMAN DASHBOARD === -->
+                <div id="page-dashboard" class="page active">
+                    <div class="space-y-6">
+                        <div class="bg-white shadow-md rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-slate-800">Selamat Datang, Konsultan!</h2>
+                            <p class="text-slate-600 mt-2">Gunakan alat ini untuk mengukur dan menganalisis maturity level proses IT governance klien Anda menggunakan COBIT 5, dengan fokus pada domain MEA.</p>
+                            <button id="btn-new-assessment-main" class="mt-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow">
+                                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Mulai Assessment Baru
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- StatCard Total -->
+                            <div class="bg-white shadow-md rounded-lg p-4 flex items-center">
+                                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-slate-500 uppercase">Total Assessment</p>
+                                    <p id="stat-total-assessments" class="text-2xl font-semibold text-slate-800">...</p>
+                                </div>
+                            </div>
+                            <!-- StatCard Rata-rata -->
+                            <div class="bg-white shadow-md rounded-lg p-4 flex items-center">
+                                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-slate-500 uppercase">Rata-rata Maturity</p>
+                                    <p id="stat-avg-maturity" class="text-2xl font-semibold text-slate-800">...</p>
+                                </div>
+                            </div>
+                            <!-- StatCard Fokus -->
+                            <div class="bg-white shadow-md rounded-lg p-4 flex items-center">
+                                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-slate-500 uppercase">Domain Fokus</p>
+                                    <p class="text-2xl font-semibold text-slate-800">MEA</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow-md rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Assessment Terbaru</h3>
+                            <div id="dashboard-loader" class="flex justify-center items-center h-24 hidden">
+                                <div class="spinner"></div>
+                            </div>
+                            <ul id="recent-assessments-list" class="divide-y divide-slate-200">
+                                <!-- Konten dinamis via JS -->
+                            </ul>
+                            <p id="no-assessments-msg" class="text-slate-500 text-center py-4 hidden">Belum ada assessment yang dibuat.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- === END HALAMAN DASHBOARD === -->
+
+                <!-- === HALAMAN ASSESSMENT === -->
+                <div id="page-assessment" class="page">
+                    <div class="bg-white shadow-md rounded-lg p-6">
+                        <h2 id="assessment-title" class="text-2xl font-semibold text-slate-800 mb-6">Assessment Baru</h2>
+                        
+                        <div id="assessment-error" class="hidden flex items-center p-4 mb-4 rounded-lg bg-red-50 text-red-700" role="alert">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <div id="assessment-error-msg" class="ml-3 text-sm font-medium"></div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="project-name" class="block text-lg font-medium text-slate-700 mb-2">
+                                Nama Klien / Proyek
+                            </label>
+                            <input type="text" id="project-name" placeholder="Contoh: PT. ABC Tbk - Audit Q3 2025" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div id="assessment-questions-container" class="space-y-8">
+                            <!-- Konten dinamis via JS -->
+                        </div>
+                        
+                        <div class="mt-8 pt-6 border-t border-slate-200 flex justify-end">
+                            <button id="assessment-save-btn" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow w-full sm:w-auto">
+                                <span id="assessment-save-btn-text">Selesai & Hitung Hasil</span>
+                                <div id="assessment-save-loader" class="spinner w-5 h-5 ml-2 hidden" style="border-left-color: #fff; width: 20px; height: 20px; border-width: 2px;"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- === END HALAMAN ASSESSMENT === -->
+
+                <!-- === HALAMAN LAPORAN === -->
+                <div id="page-reports" class="page">
+                    <!-- Loader utama halaman laporan -->
+                    <div id="reports-loader" class="flex justify-center items-center h-64 bg-white shadow-md rounded-lg p-6 hidden">
+                        <div class="spinner"></div>
+                        <span class="ml-3 text-lg text-slate-600">Memuat riwayat...</span>
+                    </div>
+
+                    <!-- Pesan saat kosong -->
+                    <div id="reports-empty" class="hidden text-center bg-white shadow-md rounded-lg p-6 py-12">
+                        <svg class="w-16 h-16 mx-auto text-slate-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                        <h2 class="mt-4 text-2xl font-semibold text-slate-800">Riwayat Laporan Kosong</h2>
+                        <p class="mt-2 text-slate-500">Anda belum membuat assessment apapun. Mulai assessment baru untuk melihat laporan di sini.</p>
+                    </div>
+
+                    <!-- Konten Laporan (jika ada data) -->
+                    <div id="reports-content" class="hidden flex flex-col lg:flex-row gap-6">
+                        <!-- Daftar Riwayat (Kiri) -->
+                        <div class="lg:w-1/3">
+                            <div class="bg-white shadow-md rounded-lg p-6">
+                                <h3 class="text-xl font-semibold text-slate-800 mb-4">Riwayat Hasil Assessment</h3>
+                                <div id="report-list-container" class="space-y-3 max-h-[70vh] overflow-y-auto">
+                                    <!-- Konten dinamis via JS -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Detail Laporan (Kanan) -->
+                        <div class="lg:w-2/3">
+                            <div id="report-detail-placeholder" class="flex items-center justify-center h-full bg-white shadow-md rounded-lg p-6">
+                                <p class="text-lg text-slate-500">Pilih assessment dari riwayat untuk melihat detail.</p>
+                            </div>
+                            <div id="report-detail-content" class="hidden space-y-6">
+                                <!-- Konten dinamis via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- === END HALAMAN LAPORAN === -->
+
+                <!-- === HALAMAN INFO === -->
+                <div id="page-info" class="page">
+                    <div class="bg-white shadow-md rounded-lg p-6">
+                        <h2 class="text-2xl font-semibold text-slate-800 mb-4">Informasi COBIT 5</h2>
+                        <p class="text-slate-600 mb-6">COBIT 5 adalah kerangka kerja komprehensif yang membantu perusahaan dalam mencapai tujuan mereka untuk tata kelola dan manajemen TI perusahaan. Ini membantu perusahaan menciptakan nilai optimal dari TI dengan menjaga keseimbangan antara realisasi manfaat dan optimalisasi risiko dan penggunaan sumber daya.</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-blue-700">Fokus Domain: MEA (Monitor, Evaluate, and Assess)</h3>
+                                <p class="text-slate-600 mt-1">Domain MEA berfokus pada pemantauan semua proses TI untuk memastikan bahwa mereka berkinerja seperti yang diharapkan dan sesuai dengan tujuan tata kelola. Ini mencakup pemantauan kinerja, penilaian kontrol internal, dan kepatuhan terhadap persyaratan eksternal.</p>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-blue-700">Proses dalam MEA</h3>
+                                <ul class="list-disc list-inside text-slate-600 space-y-1 mt-2">
+                                    <li><strong>MEA01:</strong> Monitor, Evaluate and Assess Performance and Conformance.</li>
+                                    <li><strong>MEA02:</strong> Monitor, Evaluate and Assess the System of Internal Control.</li>
+                                    <li><strong>MEA03:</strong> Monitor, Evaluate and Assess Conformance with External Requirements.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- === END HALAMAN INFO === -->
+
+            </div>
+        </main>
+        <!-- === END MAIN CONTENT === -->
+
+    </div>
+    <!-- === END KONTAINER APLIKASI === -->
+
+    <!-- === MODAL KONFIRMASI HAPUS === -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <div class="flex items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <!-- Ikon AlertTriangle (SVG) -->
+                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </div>
+                <div class="ml-4 text-left">
+                    <h3 class="text-lg font-medium text-gray-900">Hapus Assessment</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                            Apakah Anda yakin ingin menghapus assessment ini? Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button id="btn-confirm-delete" class="inline-flex items-center justify-center font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 w-full sm:w-auto sm:ml-3">
+                    Ya, Hapus
+                </button>
+                <button id="btn-cancel-delete" class="inline-flex items-center justify-center font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 px-4 py-2 text-sm bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus:ring-blue-500 mt-3 w-full sm:w-auto sm:mt-0">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sukses -->
+    <div id="successModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 text-center max-w-sm">
+        <div class="flex justify-center mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 12l2 2l4-4m5 2a9 9 0 11-18 0a9 9 0 0118 0z" />
+        </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Berhasil!</h2>
+        <p class="text-gray-600 mb-4" id="successMessage">Assessment berhasil disimpan.</p>
+        <button id="closeSuccessModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        OK
+        </button>
+    </div>
+    </div>
+
+    <!-- === END MODAL === -->
+
+
+    <!-- === SCRIPT APLIKASI UTAMA === -->
+    <script type="module">
+        // --- HAPUS SEMUA IMPORT FIREBASE ---
+
+        // --- Variabel Global & Konstan ---
+        const STORAGE_KEY = 'cobit5_assessments';
+
+        const ASSESSMENT_QUESTIONS = {
+            "MEA01": [
+                { id: 'MEA01.01', text: 'Apakah pendekatan pemantauan telah ditetapkan?', attribute: 'Establish a monitoring approach.' },
+                { id: 'MEA01.02', text: 'Apakah target kinerja dan kesesuaian (conformance) telah ditetapkan?', attribute: 'Set performance and conformance targets.' },
+                { id: 'MEA01.03', text: 'Apakah data kinerja dan kesesuaian dikumpulkan dan diproses?', attribute: 'Collect and process performance and conformance data.' },
+                { id: 'MEA01.04', text: 'Apakah kinerja dianalisis dan dilaporkan?', attribute: 'Analyse and report performance.' },
+                { id: 'MEA01.05', text: 'Apakah implementasi tindakan korektif telah dipastikan?', attribute: 'Ensure the implementation of corrective actions.' },
+            ],
+            "MEA02": [
+                { id: 'MEA02.01', text: 'Apakah kontrol internal dipantau?', attribute: 'Monitor internal controls.' },
+                { id: 'MEA02.02', text: 'Apakah efektivitas kontrol proses bisnis ditinjau ulang?', attribute: 'Review business process controls effectiveness.' },
+                { id: 'MEA02.03', text: 'Apakah self-assessment kontrol dilakukan?', attribute: 'Perform control self-assessments.' },
+                { id: 'MEA02.04', text: 'Apakah kekurangan kontrol diidentifikasi dan dilaporkan?', attribute: 'Identify and report control deficiencies.' },
+                { id: 'MEA02.05', text: 'Apakah dipastikan penyedia jaminan (assurance) independen dan berkualitas?', attribute: 'Ensure that assurance providers are independent and qualified.' },
+                { id: 'MEA02.06', text: 'Apakah inisiatif jaminan (assurance) direncanakan?', attribute: 'Plan assurance initiatives.' },
+                { id: 'MEA02.07', text: 'Apakah ruang lingkup inisiatif jaminan (assurance) ditetapkan?', attribute: 'Scope assurance initiatives.' },
+                { id: 'MEA02.08', text: 'Apakah inisiatif jaminan (assurance) dilaksanakan?', attribute: 'Execute assurance initiatives.' },
+            ],
+            "MEA03": [
+                { id: 'MEA03.01', text: 'Apakah persyaratan kepatuhan eksternal diidentifikasi?', attribute: 'Identify external compliance requirements.' },
+                { id: 'MEA03.02', text: 'Apakah respons terhadap persyaratan eksternal dioptimalkan?', attribute: 'Optimise response to external requirements.' },
+                { id: 'MEA03.03', text: 'Apakah kepatuhan eksternal dikonfirmasi?', attribute: 'Confirm external compliance.' },
+                { id: 'MEA03.04', text: 'Apakah jaminan (assurance) kepatuhan eksternal diperoleh?', attribute: 'Obtain assurance of external compliance.' }
+            ]
+        };
+        const ALL_QUESTIONS = [...ASSESSMENT_QUESTIONS.MEA01, ...ASSESSMENT_QUESTIONS.MEA02, ...ASSESSMENT_QUESTIONS.MEA03];
+
+        // --- Ikon SVG (Pengganti Lucide) ---
+        const ICONS = {
+            edit: '<svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>',
+            trash: '<svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>'
+        };
+
+        // --- Variabel Status Aplikasi ---
+        let allAssessments = [];
+        let selectedAssessmentId = null;
+        let assessmentToEditId = null; // Untuk mode edit
+        let assessmentToDeleteId = null; // Untuk modal hapus
+        let currentChartInstance = null;
+        // HAPUS: let unsubscribeAssessments = null;
+
+        // --- Referensi DOM ---
+        const navContainer = document.getElementById('main-nav');
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+        // HAPUS: const userIdDisplay = document.getElementById('user-id-display');
+        // HAPUS: const userAvatar = document.getElementById('user-avatar');
+        
+        // Dashboard
+        const dashboardLoader = document.getElementById('dashboard-loader');
+        const noAssessmentsMsg = document.getElementById('no-assessments-msg');
+        const recentAssessmentsList = document.getElementById('recent-assessments-list');
+        const statTotalAssessments = document.getElementById('stat-total-assessments');
+        const statAvgMaturity = document.getElementById('stat-avg-maturity');
+        const btnNewAssessment = document.getElementById('btn-new-assessment');
+        const btnNewAssessmentMain = document.getElementById('btn-new-assessment-main');
+        
+        // Assessment Page
+        const assessmentPage = document.getElementById('page-assessment');
+        const assessmentTitle = document.getElementById('assessment-title');
+        const assessmentError = document.getElementById('assessment-error');
+        const assessmentErrorMsg = document.getElementById('assessment-error-msg');
+        const projectNameInput = document.getElementById('project-name');
+        const questionsContainer = document.getElementById('assessment-questions-container');
+        const saveBtn = document.getElementById('assessment-save-btn');
+        const saveBtnText = document.getElementById('assessment-save-btn-text');
+        const saveLoader = document.getElementById('assessment-save-loader');
+
+        // Reports Page
+        const reportsLoader = document.getElementById('reports-loader');
+        const reportsEmpty = document.getElementById('reports-empty');
+        const reportsContent = document.getElementById('reports-content');
+        const reportListContainer = document.getElementById('report-list-container');
+        const reportDetailPlaceholder = document.getElementById('report-detail-placeholder');
+        const reportDetailContent = document.getElementById('report-detail-content');
+
+        // Delete Modal
+        const deleteModal = document.getElementById('delete-modal');
+        const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+        const btnCancelDelete = document.getElementById('btn-cancel-delete');
+
+
+        // --- Fungsi Utama ---
+
+        /**
+         * 1. Inisialisasi Aplikasi (tanpa Firebase)
+         */
+        function initializeApp() {
+            loadAssessments(); // Langsung muat dari localStorage
+            renderDashboard();
+            renderReportList();
+            updateReportPageVisibility();
+        }
+
+        /**
+         * 2. Navigasi Halaman
+         */
+        function showPage(pageId) {
+            // Sembunyikan semua halaman
+            pages.forEach(page => page.classList.remove('active'));
+            // Tampilkan halaman yang dipilih
+            document.getElementById(`page-${pageId}`).classList.add('active');
+
+            // Perbarui status aktif sidebar
+            navItems.forEach(item => {
+                if (item.dataset.page === pageId) {
+                    item.classList.add('bg-blue-600', 'text-white');
+                    item.classList.remove('text-slate-700', 'hover:bg-slate-200');
+                } else {
+                    item.classList.remove('bg-blue-600', 'text-white');
+                    item.classList.add('text-slate-700', 'hover:bg-slate-200');
+                }
+            });
+        }
+
+        /**
+         * 3. Fungsi Penyimpanan (LocalStorage)
+         */
+        
+        // Muat data dari localStorage
+        function loadAssessments() {
+            try {
+                const storedData = localStorage.getItem(STORAGE_KEY);
+                if (storedData) {
+                    allAssessments = JSON.parse(storedData);
+                    // Urutkan (pastikan tanggal valid)
+                    allAssessments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                } else {
+                    allAssessments = [];
+                }
+            } catch (e) {
+                console.error("Gagal memuat data dari LocalStorage:", e);
+                allAssessments = [];
+            }
+        }
+        
+        // Simpan data ke localStorage
+        function saveAssessments() {
+            try {
+                // Urutkan sebelum menyimpan
+                allAssessments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allAssessments));
+            } catch (e) {
+                console.error("Gagal menyimpan data ke LocalStorage:", e);
+                alert("Peringatan: Gagal menyimpan data assessment. Data mungkin hilang saat ditutup.");
+            }
+        }
+
+        /**
+         * 4. Render Ulang Komponen
+         */
+
+        //Sukses Modal
+        function showSuccessModal(message) {
+            const Modal = document.getElementById('successModal');
+            const msg = document.getElementById('successMessage');
+            msg.textContent = message;
+            modal.classList.remove('hidden');
+
+            //Tutup otomatis setelah 2.5 detik
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 2500);
+            }
+
+            document.getElementById('closeSuccessModal').addEventListener('click', () => {
+                document.getElementById('successModal').classList.add(hidden);
+            }); 
+                
+        // Render Halaman Dashboard
+        function renderDashboard() {
+            dashboardLoader.style.display = 'none';
+            
+            const total = allAssessments.length;
+            statTotalAssessments.textContent = total;
+
+            if (total > 0) {
+                const totalScore = allAssessments.reduce((acc, curr) => acc + (curr.overallScore || 0), 0);
+                statAvgMaturity.textContent = (totalScore / total).toFixed(2);
+                
+                const recent = allAssessments.slice(0, 3);
+                recentAssessmentsList.innerHTML = recent.map(a => {
+                    const score = a.overallScore || 0;
+                    const scoreColor = score >= 4 ? 'bg-green-100 text-green-800' : (score >= 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                    const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('id-ID') : 'N/A';
+                    
+                    return `
+                        <li class="py-3 flex justify-between items-center">
+                            <div>
+                                <span class="font-medium text-slate-700">${a.projectName || 'Tanpa Nama'}</span>
+                                <span class="block text-sm text-slate-500">Dibuat pada: ${date}</span>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${scoreColor}">
+                                Skor: ${score.toFixed(2)}
+                            </span>
+                        </li>
+                    `;
+                }).join('');
+                recentAssessmentsList.style.display = 'block';
+                noAssessmentsMsg.style.display = 'none';
+            } else {
+                statAvgMaturity.textContent = "0.00";
+                recentAssessmentsList.innerHTML = '';
+                recentAssessmentsList.style.display = 'none';
+                noAssessmentsMsg.style.display = 'block';
+            }
+        }
+
+        // Tampilkan/sembunyikan halaman laporan berdasarkan data
+        function updateReportPageVisibility() {
+            reportsLoader.style.display = 'none';
+            if (allAssessments.length === 0) {
+                reportsEmpty.style.display = 'block';
+                reportsContent.style.display = 'none';
+                reportDetailPlaceholder.style.display = 'flex';
+                reportDetailContent.style.display = 'none';
+            } else {
+                reportsEmpty.style.display = 'none';
+                reportsContent.style.display = 'flex';
+                // Jika tidak ada yang dipilih, tampilkan placeholder
+                if (!selectedAssessmentId) {
+                    reportDetailPlaceholder.style.display = 'flex';
+                    reportDetailContent.style.display = 'none';
+                }
+            }
+        }
+
+        // Render Daftar Laporan di Halaman Laporan
+        function renderReportList() {
+            if (allAssessments.length === 0) {
+                reportListContainer.innerHTML = ''; // Pastikan kosong
+                return;
+            }
+
+            reportListContainer.innerHTML = allAssessments.map(a => {
+                const score = a.overallScore || 0;
+                const scoreColor = score >= 4 ? 'bg-green-100 text-green-800' : (score >= 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                const date = a.createdAt ? new Date(a.createdAt).toLocaleString('id-ID') : 'N/A';
+                const isActive = a.id === selectedAssessmentId;
+                const activeClass = isActive ? 'bg-blue-50 border-blue-600 shadow' : 'bg-white border-slate-300 hover:bg-slate-50';
+
+                return `
+                <div data-id="${a.id}" class="report-list-item p-4 rounded-lg cursor-pointer border-l-4 ${activeClass}">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-slate-800 truncate">${a.projectName || 'Tanpa Nama'}</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-medium ${scoreColor}">
+                            ${score.toFixed(2)}
+                        </span>
+                    </div>
+                    <span class="text-sm text-slate-500 block mt-1">${date}</span>
+                    <div class="mt-2 flex space-x-2">
+                        <button data-id="${a.id}" class="btn-edit-report inline-flex items-center justify-center font-medium rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 border border-slate-300 hover:bg-slate-50">
+                            ${ICONS.edit} Edit
+                        </button>
+                        <button data-id="${a.id}" class="btn-delete-report inline-flex items-center justify-center font-medium rounded-lg px-3 py-1.5 text-xs bg-white text-red-600 border border-red-300 hover:bg-red-50">
+                            ${ICONS.trash} Hapus
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // Tambahkan event listener ke tombol yang baru dibuat
+            document.querySelectorAll('.report-list-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    // Jangan pilih jika mengklik tombol
+                    if (e.target.closest('button')) return;
+                    handleSelectAssessment(item.dataset.id);
+                });
+            });
+            document.querySelectorAll('.btn-edit-report').forEach(btn => {
+                btn.addEventListener('click', () => handleEditAssessment(btn.dataset.id));
+            });
+            document.querySelectorAll('.btn-delete-report').forEach(btn => {
+                btn.addEventListener('click', () => handleDeleteAssessment(btn.dataset.id));
+            });
+        }
+
+        // Render Detail Laporan
+        function renderReportDetail(assessmentId) {
+            const assessment = allAssessments.find(a => a.id === assessmentId);
+
+            if (!assessment) {
+                reportDetailPlaceholder.style.display = 'flex';
+                reportDetailContent.style.display = 'none';
+                return;
+            }
+
+            reportDetailPlaceholder.style.display = 'none';
+            reportDetailContent.style.display = 'block';
+
+            const { projectName, overallScore = 0, domainScores, scores, createdAt } = assessment;
+
+            const getMaturityLevel = (score) => {
+                const rounded = Math.floor(score);
+                if (rounded >= 5) return { level: 5, title: 'Optimizing', color: 'text-green-600' };
+                if (rounded >= 4) return { level: 4, title: 'Predictable', color: 'text-blue-600' };
+                if (rounded >= 3) return { level: 3, title: 'Established', color: 'text-cyan-600' };
+                if (rounded >= 2) return { level: 2, title: 'Managed', color: 'text-yellow-600' };
+                if (rounded >= 1) return { level: 1, title: 'Performed', color: 'text-orange-600' };
+                return { level: 0, title: 'Incomplete', color: 'text-red-600' };
+            };
+
+            const getRecommendation = (domain, score) => {
+                const roundedScore = Math.floor(score);
+                let prefix = '';
+                switch(domain) {
+                    case 'MEA01': prefix = "Kinerja & Kesesuaian (MEA01)"; break;
+                    case 'MEA02': prefix = "Kontrol Internal (MEA02)"; break;
+                    case 'MEA03': prefix = "Kepatuhan Eksternal (MEA03)"; break;
+                }
+                
+                let advice = '';
+                switch(roundedScore) {
+                    case 0: case 1:
+                        advice = "Mendesak: Proses dasar tidak konsisten. Fokus pada penetapan tanggung jawab, pendokumentasian proses, dan pengumpulan data kinerja awal."; break;
+                    case 2:
+                        advice = "Prioritas: Proses sudah berjalan namun belum terstandar. Lakukan standarisasi proses, tetapkan metrik kinerja yang jelas, dan lakukan pemantauan secara formal."; break;
+                    case 3:
+                        advice = "Perbaikan: Proses sudah terdefinisi dengan baik. Fokus sekarang beralih ke pengumpulan dan analisis data kinerja (metrik) untuk membuat proses dapat diprediksi."; break;
+                    case 4:
+                        advice = "Optimisasi: Kinerja proses sudah terukur dan dapat diprediksi. Implementasikan inisiatif perbaikan berkelanjutan (CI) untuk mengoptimalkan proses secara proaktif."; break;
+                    case 5:
+                        advice = "Unggul: Kinerja proses sudah optimal. Pertahankan dan selaraskan secara dinamis dengan strategi bisnis yang terus berubah."; break;
+                    default: advice = "Tidak ada rekomendasi.";
+                }
+                return { prefix, advice, score: (score || 0).toFixed(2) };
+            };
+
+            const overallLevel = getMaturityLevel(overallScore);
+            const recommendations = (domainScores ? [
+                getRecommendation('MEA01', domainScores.MEA01),
+                getRecommendation('MEA02', domainScores.MEA02),
+                getRecommendation('MEA03', domainScores.MEA03),
+            ] : []).filter(r => r.score !== "NaN");
+
+            const date = createdAt ? new Date(createdAt).toLocaleString('id-ID') : 'N/A';
+
+            // Bangun HTML Detail
+            reportDetailContent.innerHTML = `
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h2 class="text-3xl font-bold text-slate-800">${projectName || 'Tanpa Nama'}</h2>
+                    <p class="text-slate-500">Laporan dibuat pada: ${date}</p>
+                    <div class="mt-6 text-center bg-slate-50 p-6 rounded-lg">
+                        <h3 class="text-sm font-medium text-slate-600 uppercase tracking-wider">Maturity Level Keseluruhan</h3>
+                        <p class="text-6xl font-bold ${overallLevel.color}">${overallScore.toFixed(2)}</p>
+                        <p class="text-2xl font-semibold ${overallLevel.color}">${overallLevel.title} (Level ${overallLevel.level})</p>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-4">Rekomendasi Otomatis per Domain</h3>
+                    ${recommendations.length > 0 ? `
+                        <ul class="space-y-4">
+                            ${recommendations.map(rec => `
+                                <li class="p-4 bg-slate-50 rounded-lg border-l-4 border-blue-500">
+                                    <strong class="text-blue-700">${rec.prefix} (Skor: ${rec.score})</strong>
+                                    <p class="text-slate-600 mt-1">${rec.advice}</p>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    ` : '<p class="text-slate-500">Data domain tidak lengkap untuk membuat rekomendasi.</p>'}
+                </div>
+                
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-slate-800 mb-6">Profil Kematangan Proses (Radar Chart)</h3>
+                    <p class="text-slate-600 mb-4 text-sm">
+                        Grafik ini memvisualisasikan skor dari 17 proses individu. Ini membantu mengidentifikasi kekuatan dan kelemahan spesifik dalam domain MEA.
+                    </p>
+                    <div class="w-full h-96">
+                        <canvas id="radar-chart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            // Render Radar Chart
+            const radarData = ALL_QUESTIONS.map(q => (scores ? (scores[q.id] || 0) : 0));
+            const radarLabels = ALL_QUESTIONS.map(q => q.id);
+            
+            const ctx = document.getElementById('radar-chart').getContext('2d');
+            
+            if (currentChartInstance) {
+                currentChartInstance.destroy(); // Hancurkan chart lama
+            }
+            
+            currentChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: radarLabels,
+                    datasets: [{
+                        label: projectName || 'Assessment',
+                        data: radarData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1,
+                                backdropColor: 'rgba(255, 255, 255, 0.75)'
+                            },
+                            pointLabels: {
+                                fontSize: 10,
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render Form Assessment (Baru atau Edit)
+        function renderAssessmentForm(assessmentId) {
+            assessmentToEditId = assessmentId; // Simpan ID untuk fungsi save
+            assessmentError.style.display = 'none'; // Sembunyikan error
+
+            let currentScores = {};
+
+            if (assessmentId) {
+                // Mode Edit
+                const assessment = allAssessments.find(a => a.id === assessmentId);
+                if (assessment) {
+                    assessmentTitle.textContent = "Edit Assessment";
+                    projectNameInput.value = assessment.projectName || '';
+                    currentScores = assessment.scores || {};
+                } else {
+                    // Jika tidak ketemu, kembali ke mode Baru
+                    console.error("Assessment for edit not found");
+                    assessmentToEditId = null;
+                }
+            } else {
+                // Mode Baru
+                assessmentTitle.textContent = "Assessment Baru";
+                projectNameInput.value = '';
+                currentScores = {};
+            }
+
+            // Generate HTML untuk pertanyaan
+            questionsContainer.innerHTML = Object.entries(ASSESSMENT_QUESTIONS).map(([domain, questions]) => `
+                <div key="${domain}">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-4 pb-2 border-b border-blue-200">
+                        Domain: ${domain}
+                    </h3>
+                    <div class="space-y-6 pl-2">
+                        ${questions.map(q => {
+                            const value = currentScores[q.id] !== undefined ? currentScores[q.id] : '';
+                            return `
+                                <div class="flex flex-col md:flex-row md:items-center">
+                                    <div class="md:w-3/5">
+                                        <label class="font-medium text-slate-700">${q.text}</label>
+                                        <p class="text-sm text-slate-500">${q.attribute} (${q.id})</p>
+                                    </div>
+                                    <div class="md:w-2/5 mt-2 md:mt-0 md:pl-4">
+                                        <select data-id="${q.id}" class="assessment-select w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                            <option value="" disabled ${value === '' ? 'selected' : ''}>Pilih skor (0-5)</option>
+                                            <option value="0" ${value === 0 ? 'selected' : ''}>0 - Incomplete</option>
+                                            <option value="1" ${value === 1 ? 'selected' : ''}>1 - Performed</option>
+                                            <option value="2" ${value === 2 ? 'selected' : ''}>2 - Managed</option>
+                                            <option value="3" ${value === 3 ? 'selected' : ''}>3 - Established</option>
+                                            <option value="4" ${value === 4 ? 'selected' : ''}>4 - Predictable</option>
+                                            <option value="5" ${value === 5 ? 'selected' : ''}>5 - Optimizing</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            saveBtnText.textContent = assessmentId ? 'Simpan Perubahan' : 'Selesai & Hitung Hasil';
+            showPage('assessment');
+        }
+
+
+        /**
+         * 5. Penangan Aksi (Event Handlers)
+         */
+
+        // Klik Navigasi
+        navContainer.addEventListener('click', (e) => {
+            const navButton = e.target.closest('.nav-item');
+            if (navButton && navButton.dataset.page) {
+                showPage(navButton.dataset.page);
+            }
+        });
+
+        // Klik "Mulai Assessment Baru"
+        btnNewAssessment.addEventListener('click', () => renderAssessmentForm(null));
+        btnNewAssessmentMain.addEventListener('click', () => renderAssessmentForm(null));
+
+        // Klik "Simpan" di form assessment
+        saveBtn.addEventListener('click', () => {
+            const projectName = projectNameInput.value;
+            if (!projectName) {
+                assessmentErrorMsg.textContent = 'Nama proyek/klien tidak boleh kosong.';
+                assessmentError.style.display = 'flex';
+                return;
+            }
+
+            // Kumpulkan skor dari form
+            const scores = {};
+            const selects = document.querySelectorAll('.assessment-select');
+            let allAnswered = true;
+            selects.forEach(sel => {
+                if (sel.value) {
+                    scores[sel.dataset.id] = parseInt(sel.value, 10);
+                } else {
+                    allAnswered = false;
+                }
+            });
+
+            if (!allAnswered || Object.keys(scores).length < ALL_QUESTIONS.length) {
+                assessmentErrorMsg.textContent = 'Harap jawab semua pertanyaan assessment.';
+                assessmentError.style.display = 'flex';
+                return;
+            }
+
+            // Tampilkan loader
+            assessmentError.style.display = 'none';
+            saveBtn.disabled = true;
+            saveLoader.style.display = 'block';
+            saveBtnText.textContent = 'Menyimpan...';
+            
+            try {
+                // Kalkulasi skor (salin dari React)
+                const MEA01_Score = (scores['MEA01.01'] + scores['MEA01.02'] + scores['MEA01.03'] + scores['MEA01.04'] + scores['MEA01.05']) / 5;
+                const MEA02_Score = (scores['MEA02.01'] + scores['MEA02.02'] + scores['MEA02.03'] + scores['MEA02.04'] + scores['MEA02.05'] + scores['MEA02.06'] + scores['MEA02.07'] + scores['MEA02.08']) / 8;
+                const MEA03_Score = (scores['MEA03.01'] + scores['MEA03.02'] + scores['MEA03.03'] + scores['MEA03.04']) / 4;
+                const overallScore = (MEA01_Score + MEA02_Score + MEA03_Score) / 3;
+                
+                const assessmentData = {
+                    projectName,
+                    scores,
+                    domainScores: { MEA01: MEA01_Score, MEA02: MEA02_Score, MEA03: MEA03_Score },
+                    overallScore,
+                    updatedAt: new Date().toISOString(), // Simpan sebagai string ISO
+                };
+                
+                let savedAssessmentId = assessmentToEditId;
+
+                // cek apakah dalam mode edit atau baru
+                if (assessmentToEditId) {
+                    //Jika sedan dalam mode edit, ganti data lama; jika tidak, tambahkan baru
+
+                
+                    const index = allAssessments.findIndex(a => a.id === assessmentToEditId);
+                    if (index > -1) {
+                        allAssessments[index] = { 
+                            ...allAssessments[index], 
+                            ...assessmentData 
+                        };
+                        
+                    }
+                } else {
+                    // Mode Baru: Buat
+                    savedAssessmentId = crypto.randomUUID(); // Buat ID unik
+                    allAssessments.push ({
+                        ...assessmentData,
+                        id: savedAssessmentId,
+                        createdAt: new Date().toISOString(), // Simpan sebagai string ISO
+                    });
+                }
+                
+                //simpan ke localStorage
+                saveAssessments();
+                // Tandai assassment yang baru disimpan sebagai terpilih
+                selectedAssessmentId = savedAssessmentId;
+
+                //update UI
+                renderDashboard();
+                if (typeof renderReportList === 'function') {
+                    renderReportList();
+                }
+                if (typeof updateReportPageVisibility === 'function') {
+                    updateReportPageVisibility();
+                }
+
+                showPage('reports'); // Pindah ke halaman laporan
+
+                // Reset form & Tombol
+                saveBtn.textContent = 'Simpan';
+                
+                // beri notifikasi sukses
+                showSuccessModal('Assessment berhasil disimpan!');
+
+            } catch (err) {
+                console.error("Error saving assessment:", err);
+                assessmentErrorMsg.textContent = 'Gagal menyimpan assessment. Cek konsol.';
+                assessmentError.style.display = 'flex';
+            } finally {
+                // Sembunyikan loader
+                saveBtn.disabled = false;
+                saveLoader.style.display = 'none';
+                // Teks tombol akan diperbarui saat form di-render lagi
+            }
+        });
+        
+        // Penangan Aksi Halaman Laporan (di-delegasi-kan saat renderReportList)
+        function handleSelectAssessment(id) {
+            selectedAssessmentId = id;
+            renderReportList(); // Render ulang daftar untuk status aktif
+            renderReportDetail(id); // Render detail
+        }
+
+        function handleEditAssessment(id) {
+            renderAssessmentForm(id);
+        }
+
+        function handleDeleteAssessment(id) {
+            assessmentToDeleteId = id;
+            deleteModal.style.display = 'flex';
+        }
+
+        // Penangan Aksi Modal
+        btnCancelDelete.addEventListener('click', () => {
+            assessmentToDeleteId = null;
+            deleteModal.style.display = 'none';
+        });
+
+        btnConfirmDelete.addEventListener('click', () => {
+            if (!assessmentToDeleteId) return;
+
+            btnConfirmDelete.disabled = true;
+            try {
+                // Filter array untuk menghapus
+                allAssessments = allAssessments.filter(a => a.id !== assessmentToDeleteId);
+                saveAssessments(); // Simpan perubahan ke LocalStorage
+
+                // Jika yang dihapus adalah yang sedang aktif, reset pilihan
+                if (selectedAssessmentId === assessmentToDeleteId) {
+                    selectedAssessmentId = null;
+                }
+                
+                // Render ulang UI
+                renderDashboard();
+
+                //kalau punya laporan
+                if (typeof renderReportList === 'function') {
+                    renderReportList();
+                }
+
+                //jika belum punya fungsi updateReportPageVisibility, buat saja
+                //if (typeof updateReportPageVisibility !== 'function') {
+                //    updateReportPageVisibility = function() {
+                // }
+
+                
+                
+                // Jika tidak ada yang dipilih, tampilkan placeholder, jika ada, biarkan
+                if (!selectedAssessmentId && allAssessments.length > 0) {
+                    selectedAssessmentId = allAssessments[0].id; // Pilih yang pertama
+                    renderReportDetail(selectedAssessmentId);
+                } else if (selectedAssessmentId) {
+                    renderReportDetail(selectedAssessmentId); // Render ulang yang masih dipilih
+                } else {
+                    reportDetailPlaceholder.style.display = 'flex';
+                    reportDetailContent.style.display = 'none';
+                }
+
+                assessmentToDeleteId = null;
+                deleteModal.style.display = 'none';
+                
+            } catch (err) {
+                console.error("Error deleting assessment:", err);
+                alert("Gagal menghapus assessment.");
+            } finally {
+                btnConfirmDelete.disabled = false;
+            }
+        });
+
+
+        // --- Inisialisasi Aplikasi ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            showPage('dashboard'); // Tampilkan dashboard sebagai halaman awal
+        });
+
+    </script>
+</body>
+</html>
